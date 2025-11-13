@@ -1,8 +1,9 @@
 document.addEventListener("DOMContentLoaded", () => {
 
-    const root = document.getElementById("my-custom-slider");
+    // Cambiato ID root per evitare conflitti con altri slider Enpal
+    const root = document.getElementById("mini-slider");
     if (!root) {
-        console.error("Slider root element #my-custom-slider non trovato.");
+        console.error("SmallSlider: elemento #mini-slider non trovato.");
         return;
     }
 
@@ -54,11 +55,14 @@ document.addEventListener("DOMContentLoaded", () => {
     function render() {
         root.innerHTML = "";
 
+        // Progress bar
         const progress = document.createElement("div");
         progress.style = "width:100%;background:rgba(229,231,235,0.5);height:6px;border-radius:4px;margin-bottom:20px;";
+
         const bar = document.createElement("div");
-        bar.id = "slider-progress-bar";
+        bar.id = "small-slider-progress-bar";
         bar.style = "width:0%;height:100%;background:#ffb000;border-radius:4px;transition:width 0.4s ease;";
+
         progress.appendChild(bar);
         root.appendChild(progress);
 
@@ -66,10 +70,10 @@ document.addEventListener("DOMContentLoaded", () => {
         root.appendChild(slide);
 
         updateProgress();
-        sliderWidget.track("step_view", { step: steps[current].id });
+        smallSlider.track("step_view", { step: steps[current].id });
     }
 
-    // ====== CREA LA SLIDE ======
+    // ====== CREA UNA SLIDE ======
     function buildSlide(step) {
         const container = document.createElement("div");
         container.className = "slider-card";
@@ -79,6 +83,102 @@ document.addEventListener("DOMContentLoaded", () => {
         title.textContent = step.title;
         container.appendChild(title);
 
+        // Scelte singole
         if (step.type === "single") {
             const grid = document.createElement("div");
             grid.className = "choice-grid";
+
+            step.options.forEach(opt => {
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "choice-option";
+                btn.textContent = opt.label;
+
+                btn.onclick = () => {
+                    data[step.id] = opt.value;
+                    smallSlider.track("step_answer", { step: step.id, value: opt.value });
+                    next();
+                };
+
+                grid.appendChild(btn);
+            });
+
+            container.appendChild(grid);
+        }
+
+        // Input (CAP, nome, telefono)
+        if (step.type === "input") {
+            const form = document.createElement("form");
+            form.className = "form-group";
+
+            const input = document.createElement("input");
+            input.className = "w-input";
+            input.placeholder = step.placeholder;
+            input.name = step.name;
+            input.required = true;
+
+            const btn = document.createElement("button");
+            btn.type = "submit";
+            btn.className = "btn-next";
+            btn.textContent = "Avanti";
+
+            form.appendChild(input);
+            form.appendChild(btn);
+
+            form.onsubmit = e => {
+                e.preventDefault();
+                data[step.id] = input.value;
+                smallSlider.track("step_answer", { step: step.id, value: input.value });
+                next();
+            };
+
+            container.appendChild(form);
+        }
+
+        // Slide finale
+        if (step.type === "info") {
+            const html = document.createElement("div");
+            html.innerHTML = step.html;
+            container.appendChild(html);
+        }
+
+        // Bottone indietro
+        if (current > 0 && step.type !== "info") {
+            const back = document.createElement("button");
+            back.type = "button";
+            back.className = "btn-prev";
+            back.textContent = "Indietro";
+            back.onclick = prev;
+            container.appendChild(back);
+        }
+
+        return container;
+    }
+
+    // ====== PROGRESS BAR ======
+    function updateProgress() {
+        const bar = document.getElementById("small-slider-progress-bar");
+        const percentage = (current / (steps.length - 1)) * 100;
+        bar.style.width = percentage + "%";
+    }
+
+    // ====== AVANTI ======
+    function next() {
+        if (current < steps.length - 1) {
+            current++;
+            render();
+        } else {
+            smallSlider.track("complete", data);
+        }
+    }
+
+    // ====== INDIETRO ======
+    function prev() {
+        if (current > 0) {
+            current--;
+            render();
+        }
+    }
+
+    render();
+});
