@@ -16,9 +16,10 @@
     document.body.appendChild(script);
 
     // Tracking per GA4 + Meta Pixel
-    window.sliderWidget = {
+    // -> Rinominato per evitare qualsiasi conflitto con window._slider
+    window.smallSlider = {
         track(eventName, payload = {}) {
-            console.log("Slider event:", eventName, payload);
+            console.log("SmallSlider event:", eventName, payload);
 
             // GA4
             if (typeof gtag === "function") {
